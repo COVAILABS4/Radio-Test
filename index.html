@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Button Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        #imageContainer {
+            width: 600px;
+            height: 400px;
+            border: 2px dashed #ccc;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            user-drag: none;
+            -webkit-user-drag: none;
+        }
+
+        .draggable {
+            position: absolute;
+            padding: 5px 10px;
+            background: red;
+            color: white;
+            cursor: move;
+            border: none;
+            min-width: 50px;
+            min-height: 20px;
+            transform-origin: center center;
+        }
+
+        .input-container {
+            display: none;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .size-controls button {
+            margin: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Interactive Button Editor</h2>
+    <input type="file" id="imageInput" accept="image/*">
+    <div id="imageContainer"></div>
+    <button id="toggleAddButton">Toggle Add Button</button>
+    <div class="input-container" id="buttonInputs">
+        <input type="text" id="buttonName" placeholder="Button Name">
+        <input type="color" id="buttonColor" value="#ff0000">
+        <input type="color" id="textColor" value="#ffffff">
+        <input type="number" id="rangeStart" placeholder="Range Start">
+        <input type="number" id="rangeEnd" placeholder="Range End">
+        <button id="addButton">Create</button>
+    </div>
+    <div id="controls">
+        <button id="reset">Reset</button>
+        <button id="download">Download JSON</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Size</th>
+                <th>Range</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="buttonList"></tbody>
+    </table>
+
+    <script>
+        let imageContainer = document.getElementById("imageContainer");
+        let imageInput = document.getElementById("imageInput");
+        let toggleAddButton = document.getElementById("toggleAddButton");
+        let addButton = document.getElementById("addButton");
+        let buttonInputs = document.getElementById("buttonInputs");
+        let buttonName = document.getElementById("buttonName");
+        let buttonColor = document.getElementById("buttonColor");
+        let textColor = document.getElementById("textColor");
+        let rangeStart = document.getElementById("rangeStart");
+        let rangeEnd = document.getElementById("rangeEnd");
+        let buttonList = document.getElementById("buttonList");
+        let buttons = [];
+        let buttonId = 1;
+        let imageUrl = "";
+        let isOpen = false;
+
+        imageInput.addEventListener("change", function (event) {
+            let file = event.target.files[0];
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                imageUrl = file.name; // Store image file name
+                imageContainer.innerHTML = `<img src="${e.target.result}" id="bgImage">`;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        toggleAddButton.addEventListener("click", function () {
+            isOpen = !isOpen;
+            buttonInputs.style.display = isOpen ? "block" : "none";
+        });
+
+        addButton.addEventListener("click", function () {
+            let name = buttonName.value.trim();
+            if (!name) return;
+
+            let btn = document.createElement("button");
+            btn.className = "draggable";
+            btn.innerText = name;
+            btn.style.background = buttonColor.value;
+            btn.style.color = textColor.value;
+            btn.style.left = "50px";
+            btn.style.top = "50px";
+            btn.dataset.id = buttonId;
+
+            imageContainer.appendChild(btn);
+
+            let btnData = {
+                id: buttonId,
+                name: name,
+                scale: 1, // default scale
+                position: { x: 50, y: 50 },
+                backgroundColor: buttonColor.value,
+                textColor: textColor.value,
+                range: { start: rangeStart.value, end: rangeEnd.value },
+                test_result: null
+            };
+            buttons.push(btnData);
+            makeDraggable(btn, btnData);
+            updateTable();
+            buttonId++;
+        });
+
+        function makeDraggable(element, data) {
+            element.onmousedown = function (event) {
+                if (event.target.classList.contains("resizer")) return;
+
+                event.preventDefault();
+                let shiftX = event.clientX - element.getBoundingClientRect().left;
+                let shiftY = event.clientY - element.getBoundingClientRect().top;
+
+                function moveAt(pageX, pageY) {
+                    let containerRect = imageContainer.getBoundingClientRect();
+                    let newX = pageX - containerRect.left - shiftX;
+                    let newY = pageY - containerRect.top - shiftY;
+                    element.style.left = newX + 'px';
+                    element.style.top = newY + 'px';
+                    data.position.x = newX;
+                    data.position.y = newY;
+                    updateTable();
+                }
+
+                function onMouseMove(event) {
+                    moveAt(event.pageX, event.pageY);
+                }
+                document.addEventListener('mousemove', onMouseMove);
+
+                document.onmouseup = function () {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.onmouseup = null;
+                };
+            };
+            element.ondragstart = function () {
+                return false;
+            };
+        }
+
+        function updateTable() {
+            buttonList.innerHTML = "";
+            buttons.forEach(btn => {
+                let sizeControls = `   
+                    <div class="size-controls">
+                        <button onclick="resizeButton(${btn.id}, -0.05)">-</button>
+                        <button onclick="resizeButton(${btn.id}, 0.05)">+</button>
+                    </div>
+                `;
+                let row = `<tr>
+                    <td>${btn.id}</td>
+                    <td>${btn.name}</td>
+                    <td>${btn.position.x}, ${btn.position.y}</td>
+                    <td>
+                        ${btn.scale.toFixed(2)}
+                        ${sizeControls}
+                    </td>
+                    <td>${btn.range.start} - ${btn.range.end}</td>
+                    <td><button onclick="deleteButton(${btn.id})">Delete</button></td>
+                </tr>`;
+                buttonList.innerHTML += row;
+            });
+        }
+
+        function resizeButton(id, change) {
+            let btn = buttons.find(b => b.id === id);
+            if (btn) {
+                // Update the scale, ensuring it stays between 0 and 1
+                btn.scale = Math.max(0, Math.min(1, btn.scale + change));
+                let buttonElement = imageContainer.querySelector(`[data-id="${id}"]`);
+                if (buttonElement) {
+                    buttonElement.style.transform = `scale(${btn.scale})`;
+                    updateTable();
+                }
+            }
+        }
+
+        function deleteButton(id) {
+            // Remove button from the array
+            buttons = buttons.filter(btn => btn.id !== id);
+
+            // Find the button element in the image container and remove it
+            let buttonElement = imageContainer.querySelector(`[data-id="${id}"]`);
+            if (buttonElement) {
+                imageContainer.removeChild(buttonElement);
+            }
+
+            // Update the table after deletion
+            updateTable();
+        }
+
+        document.getElementById('download').addEventListener('click', function () {
+            // Include image URL in the JSON data
+            let jsonData = JSON.stringify({
+                imageUrl: imageUrl,  // Add the image URL
+                buttons: buttons     // Add the buttons
+            }, null, 2);
+
+            // Create a Blob from the JSON data
+            let blob = new Blob([jsonData], { type: 'application/json' });
+
+            // Create a temporary link element
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'buttons.json';
+
+            // Trigger the download
+            link.click();
+        });
+
+    </script>
+</body>
+
+</html>
