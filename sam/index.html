@@ -34,11 +34,18 @@
         }
 
         .correct {
-            border: 2px solid green !important;
+
+            background-color: rgb(0, 255, 0) !important;
+            color: black !important;
+            border: 3px solid black;
+
         }
 
         .wrong {
-            border: 2px solid red !important;
+            background-color: rgb(255, 0, 0) !important;
+            color: black !important;
+            border: 3px solid black;
+
         }
 
         #controls {
@@ -127,7 +134,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 1
+                            "end": 0.9
                         }
                     },
                     {
@@ -142,7 +149,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 1
+                            "end": 0.9
                         }
                     },
                     {
@@ -157,7 +164,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 1
+                            "end": 0.9
                         }
                     },
                     {
@@ -172,7 +179,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 1,
-                            "end": 2
+                            "end": 2.3
                         }
                     },
                     {
@@ -187,7 +194,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 1,
-                            "end": 2
+                            "end": 2.3
                         }
                     },
                     {
@@ -232,7 +239,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 0
+                            "end": 0.1
                         }
                     },
                     {
@@ -247,7 +254,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 3
+                            "end": 1
                         }
                     },
                     {
@@ -262,7 +269,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 3
+                            "end": 1
                         }
                     },
                     {
@@ -292,7 +299,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 0
+                            "end": 0.01
                         }
                     },
                     {
@@ -307,7 +314,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 0
+                            "end": 0.01
                         }
                     },
                     {
@@ -322,7 +329,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 2,
-                            "end": 2
+                            "end": 2.3
                         }
                     },
                     {
@@ -337,7 +344,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 20,
-                            "end": 25
+                            "end": 24
                         }
                     },
                     {
@@ -381,7 +388,7 @@
                         "backgroundColor": "rgb(0, 0, 0)",
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
-                            "start": 95,
+                            "start": 90,
                             "end": 105
                         }
                     },
@@ -396,7 +403,7 @@
                         "backgroundColor": "rgb(0, 0, 0)",
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
-                            "start": 95,
+                            "start": 90,
                             "end": 105
                         }
                     },
@@ -411,7 +418,7 @@
                         "backgroundColor": "rgb(0, 0, 0)",
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
-                            "start": 95,
+                            "start": 90,
                             "end": 105
                         }
                     },
@@ -441,8 +448,8 @@
                         "backgroundColor": "rgb(0, 0, 0)",
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
-                            "start": 0.1,
-                            "end": 0.4
+                            "start": 0,
+                            "end": 0.1
                         }
                     },
                     {
@@ -457,7 +464,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 0
+                            "end": 0.1
                         }
                     },
                     {
@@ -472,7 +479,7 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 0
+                            "end": 0.1
                         }
                     },
                     {
@@ -487,13 +494,11 @@
                         "textColor": "rgb(255, 255, 255)",
                         "range": {
                             "start": 0,
-                            "end": 0
+                            "end": 0.1
                         }
                     }
                 ]
             }
-
-
         ];
 
         function downloadExcel(data, title) {
@@ -526,7 +531,7 @@
                     btn.onclick = function () {
                         let value = prompt("Enter value for " + btnData.name);
                         if (value === null) return;
-
+                        console.log(value)
                         if (value >= btnData.range.start && value <= btnData.range.end) {
                             alert("Correct!");
                             btn.classList.add("correct");

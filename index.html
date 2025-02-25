@@ -58,6 +58,14 @@
         .controls-container {
             margin-top: 10px;
         }
+
+        .editable {
+            cursor: pointer;
+        }
+
+        .editable:hover {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 
@@ -77,14 +85,11 @@
             <input type="number" id="movementSpeed" value="5" min="1" max="50"> px
         </label>
         <button id="downloadJson">Download JSON</button>
+        <input type="file" id="uploadJson" accept=".json">
     </div>
 
     <input type="file" id="imageInput" accept="image/*">
     <div id="imageContainer"></div>
-
-
-
-
 
     <table>
         <thead>
@@ -93,7 +98,8 @@
                 <th>Name</th>
                 <th>Position</th>
                 <th>Scale</th>
-                <th>Range</th>
+                <th>Start Range</th>
+                <th>End Range</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -113,6 +119,7 @@
         let buttonList = document.getElementById("buttonList");
         let movementSpeedInput = document.getElementById("movementSpeed");
         let downloadJsonButton = document.getElementById("downloadJson");
+        let uploadJsonInput = document.getElementById("uploadJson");
 
         let buttons = [];
         let buttonId = 1;
@@ -131,8 +138,8 @@
 
         addButton.addEventListener("click", function () {
             let name = buttonName.value.trim();
-            let rangeStart = parseInt(startRange.value.trim(), 10);
-            let rangeEnd = parseInt(endRange.value.trim(), 10);
+            let rangeStart = parseFloat(startRange.value.trim());
+            let rangeEnd = parseFloat(endRange.value.trim());
             if (!name || isNaN(rangeStart) || isNaN(rangeEnd)) return;
 
             let buttonBox = document.createElement("div");
@@ -187,13 +194,23 @@
                     <td class="scale-container">
                         ${btn.scale.toFixed(2)}
                     </td>
-                    <td class="range-container">
-                        ${btn.range.start} - ${btn.range.end}
-                    </td>
+                    <td class="editable" contenteditable="true" onblur="updateRange(${btn.id}, 'start', this.innerText)">${btn.range.start}</td>
+                    <td class="editable" contenteditable="true" onblur="updateRange(${btn.id}, 'end', this.innerText)">${btn.range.end}</td>
                     <td><button onclick="deleteButton(${btn.id})">Delete</button></td>
                 </tr>`;
                 buttonList.innerHTML += row;
             });
+        }
+
+        function updateRange(id, type, value) {
+            let btn = buttons.find(b => b.id === id);
+            if (btn) {
+                if (type === "start") {
+                    btn.range.start = parseFloat(value);
+                } else if (type === "end") {
+                    btn.range.end = parseFloat(value);
+                }
+            }
         }
 
         function deleteButton(id) {
@@ -231,6 +248,12 @@
                 case "]":
                     scaleButton(selectedButton.id, -0.1);
                     break;
+                case "+":
+                    movementSpeedInput.value = Math.min(50, parseInt(movementSpeedInput.value, 10) + 1);
+                    break;
+                case "-":
+                    movementSpeedInput.value = Math.max(1, parseInt(movementSpeedInput.value, 10) - 1);
+                    break;
                 default:
                     return;
             }
@@ -256,6 +279,7 @@
         }
 
         downloadJsonButton.addEventListener("click", function () {
+
             let jsonData = {
                 imageUrl: imageUrl,
                 buttons: buttons.map(btn => ({
@@ -274,6 +298,61 @@
             link.href = URL.createObjectURL(blob);
             link.download = "buttons.json";
             link.click();
+        });
+
+        uploadJsonInput.addEventListener("change", function (event) {
+            let file = event.target.files[0];
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                let jsonData = JSON.parse(e.target.result);
+                imageUrl = jsonData.imageUrl;
+                imageContainer.innerHTML = `<img src="${imageUrl}" id="bgImage">`;
+
+                buttons = jsonData.buttons.map(btn => {
+                    let buttonBox = document.createElement("div");
+                    buttonBox.className = "button-box";
+                    buttonBox.style.left = `${btn.position.x}px`;
+                    buttonBox.style.top = `${btn.position.y}px`;
+                    buttonBox.dataset.id = btn.id;
+
+                    let btnElement = document.createElement("button");
+                    btnElement.innerText = btn.name;
+                    btnElement.style.background = btn.backgroundColor;
+                    btnElement.style.color = btn.textColor;
+                    btnElement.style.padding = "5px 10px";
+                    btnElement.style.border = "none";
+                    btnElement.style.transform = `scale(${btn.scale})`
+
+                    buttonBox.appendChild(btnElement);
+                    imageContainer.appendChild(buttonBox);
+
+                    let btnData = {
+                        id: btn.id,
+                        name: btn.name,
+                        element: buttonBox,
+                        position: btn.position,
+                        scale: btn.scale,
+                        range: btn.range
+                    };
+
+                    buttonBox.addEventListener("click", function () {
+                        if (selectedButton === btnData) {
+                            buttonBox.classList.remove("selected");
+                            selectedButton = null;
+                        } else {
+                            if (selectedButton) selectedButton.element.classList.remove("selected");
+                            selectedButton = btnData;
+                            buttonBox.classList.add("selected");
+                        }
+                    });
+
+                    return btnData;
+                });
+
+                buttonId = buttons.length > 0 ? Math.max(...buttons.map(b => b.id)) + 1 : 1;
+                updateTable();
+            };
+            reader.readAsText(file);
         });
 
     </script>
